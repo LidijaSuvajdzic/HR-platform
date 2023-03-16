@@ -10,8 +10,8 @@ import java.util.UUID;
 public class Candidate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="id", nullable=false)
-    private UUID id;
+    @Column(name="id", nullable=false,  unique = true)
+    private Long id;
 
     @Column(name="firstname", nullable=false)
     private String firstname;
@@ -31,4 +31,6 @@ public class Candidate {
     @ManyToMany
     @JoinTable(name = "candidate_skills", joinColumns = @JoinColumn(name = "candidate_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id"))
     private List<Skill> skills;
+
+
 }

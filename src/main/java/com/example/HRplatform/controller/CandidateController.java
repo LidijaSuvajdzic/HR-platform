@@ -1,6 +1,8 @@
 package com.example.HRplatform.controller;
 import com.example.HRplatform.dto.CandidateDto;
+import com.example.HRplatform.dto.RemoveSkillRequestDto;
 import com.example.HRplatform.service.CandidateService;
+import org.hibernate.Remove;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,4 +38,12 @@ public class CandidateController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
+    @DeleteMapping("/")
+    public ResponseEntity<?> delete(@RequestBody RemoveSkillRequestDto removeSkillRequestDto) {
+        if (removeSkillRequestDto != null) {
+            candidateService.removeSkillFromCandidate(removeSkillRequestDto);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
 }

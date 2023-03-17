@@ -1,5 +1,6 @@
 package com.example.HRplatform.service;
 import com.example.HRplatform.dto.CandidateDto;
+import com.example.HRplatform.dto.RemoveSkillRequestDto;
 import com.example.HRplatform.model.Candidate;
 import com.example.HRplatform.model.CandidateSkill;
 import com.example.HRplatform.model.Skill;
@@ -59,6 +60,17 @@ public class CandidateService {
         List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
         for (CandidateSkill candidateSkill : candidateSkillServiceList) {
             candidateSkillService.delete(candidateSkill);
+        }
+    }
+
+    public void removeSkillFromCandidate(RemoveSkillRequestDto removeSkillRequestDto) {
+        Candidate candidate = candidateRepository.findByFirstNameAndLastName(removeSkillRequestDto.getCandidateFirstname(), removeSkillRequestDto.getCandidateLastname());
+        Skill skill = skillService.findByName(removeSkillRequestDto.getSkillName());
+        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+        for (CandidateSkill candidateSkill : candidateSkillServiceList) {
+           if(skill.getId() == candidateSkill.getSkillId() && candidateSkill.getCandidateId() == candidate.getId()) {
+               candidateSkillService.delete(candidateSkill);
+           }
         }
     }
 }

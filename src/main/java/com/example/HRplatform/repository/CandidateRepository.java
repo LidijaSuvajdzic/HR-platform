@@ -14,4 +14,6 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
     @Query("SELECT c FROM Candidate c WHERE c.firstname = ?1 and c.lastname=?2")
     Candidate findByFirstNameAndLastName(String firstname, String lastname);
+
+
 }

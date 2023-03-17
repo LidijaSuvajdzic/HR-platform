@@ -1,6 +1,7 @@
 package com.example.HRplatform.service;
 import com.example.HRplatform.dto.CandidateDto;
 import com.example.HRplatform.model.Candidate;
+import com.example.HRplatform.model.CandidateSkill;
 import com.example.HRplatform.model.Skill;
 import com.example.HRplatform.repository.CandidateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,26 +20,43 @@ public class CandidateService {
     @Autowired
     SkillService skillService;
 
-    @Transactional
+    @Autowired
+    CandidateSkillService candidateSkillService;
+
+
     public boolean save(CandidateDto candidateDto) {
-        List<Candidate> possibleCandidates = new ArrayList<>();
         if(candidateRepository.findByFirstNameAndLastName(candidateDto.getFirstname(),candidateDto.getLastname()) != null) {
             return true;
         }else {
             Candidate candidate = new Candidate(candidateDto.getFirstname(), candidateDto.getLastname(), candidateDto.getEmail(), candidateDto.getPhoneNumber(), candidateDto.getDate());
-            List<Skill> candidateSkills = new ArrayList<>();
+            candidateRepository.save(candidate);
             for (String skillName : candidateDto.getSkills()) {
                 if (skillService.findByName(skillName) == null) {
                     Skill newSkill = new Skill(skillName);
-                    candidateSkills.add(newSkill);
+                    skillService.save(newSkill);
+                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
+                    candidateSkillService.save(candidateSkill);
                 } else {
                     Skill newSkill = skillService.findByName(skillName);
-                    candidateSkills.add(newSkill);
+                    skillService.save(newSkill);
+                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
+                    candidateSkillService.save(candidateSkill);
                 }
             }
-            candidate.setSkills(candidateSkills);
-            candidateRepository.save(candidate);
             return false;
         }
+    }
+
+    public boolean isExists(String firstname, String lastname) {
+        if(candidateRepository.findByFirstNameAndLastName(firstname,lastname) != null) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    public void delete(String firstname, String lastname) {
+        Candidate candidate = candidateRepository.findByFirstNameAndLastName(firstname, lastname);
+        candidateRepository.delete(candidate);
     }
 }

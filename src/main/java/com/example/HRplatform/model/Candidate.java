@@ -29,10 +29,8 @@ public class Candidate {
     @Column(name="dateOfBirth", nullable=false)
     private Date dateOfBirth;
 
-    @ManyToMany(cascade=CascadeType.ALL)
-    @JoinTable(name = "candidate_skills", joinColumns = @JoinColumn(name = "candidate_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id"))
-    @JsonIgnore
-    private List<Skill> skills;
+    @OneToMany(mappedBy = "candidateId")
+    private List<CandidateSkill> skills;
 
     public Candidate() {
 
@@ -94,11 +92,11 @@ public class Candidate {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public List<Skill> getSkills() {
+    public List<CandidateSkill> getSkills() {
         return skills;
     }
 
-    public void setSkills(List<Skill> skills) {
+    public void setSkills(List<CandidateSkill> skills) {
         this.skills = skills;
     }
 }

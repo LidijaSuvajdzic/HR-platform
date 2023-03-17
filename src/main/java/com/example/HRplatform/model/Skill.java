@@ -16,8 +16,8 @@ public class Skill {
     @Column(name="name", nullable=false)
     private String name;
 
-    @ManyToMany(mappedBy = "skills")
-    List<Candidate> candidates;
+    @OneToMany(mappedBy = "skillId")
+    private List<CandidateSkill> candidates;
 
     public Skill() {
     }
@@ -40,5 +40,13 @@ public class Skill {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<CandidateSkill> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(List<CandidateSkill> candidates) {
+        this.candidates = candidates;
     }
 }

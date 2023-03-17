@@ -2,6 +2,7 @@ package com.example.HRplatform.controller;
 import com.example.HRplatform.dto.SkillDto;
 import com.example.HRplatform.model.Skill;
 import com.example.HRplatform.service.SkillService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -12,17 +13,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping(value = "api/skill")
 public class SkillController {
+
+    @Autowired
     private SkillService skillService;
 
-    public SkillController(SkillService skillService) {
-        this.skillService = skillService;
-    }
-
     @PostMapping(value = "/")
-    public ResponseEntity<Skill> save(@RequestBody SkillDto skillDto){
+    public ResponseEntity<?> save(@RequestBody SkillDto skillDto){
         if (skillDto != null){
-            skillService.save(skillDto);
-            return new ResponseEntity<>(HttpStatus.OK);
+            boolean isExists = skillService.save(skillDto);
+            if (isExists) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }else
+                return new ResponseEntity<>(HttpStatus.OK);
         }
         else
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

@@ -2,6 +2,8 @@ package com.example.HRplatform.model;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name="skills")
 public class Skill {
@@ -11,8 +13,14 @@ public class Skill {
     @Column(name="id", nullable=false, unique = true)
     private Long id;
 
-    @Column(name="name", nullable=false, unique = true)
+    @Column(name="name", nullable=false)
     private String name;
+
+    @ManyToMany(mappedBy = "skills")
+    List<Candidate> candidates;
+
+    public Skill() {
+    }
 
     public Skill(String name) {
         this.name = name;

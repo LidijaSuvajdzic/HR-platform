@@ -6,9 +6,7 @@ import com.example.HRplatform.model.Skill;
 import com.example.HRplatform.repository.CandidateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -58,5 +56,9 @@ public class CandidateService {
     public void delete(String firstname, String lastname) {
         Candidate candidate = candidateRepository.findByFirstNameAndLastName(firstname, lastname);
         candidateRepository.delete(candidate);
+        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+        for (CandidateSkill candidateSkill : candidateSkillServiceList) {
+            candidateSkillService.delete(candidateSkill);
+        }
     }
 }

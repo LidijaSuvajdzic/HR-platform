@@ -5,10 +5,8 @@ import com.example.HRplatform.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
-public class SkillService {
+public class  SkillService {
 
     @Autowired
     private SkillRepository skillRepository;

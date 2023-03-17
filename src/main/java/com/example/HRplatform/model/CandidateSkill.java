@@ -19,6 +19,8 @@ public class CandidateSkill {
         return candidateId;
     }
 
+    public CandidateSkill() {}
+
     public void setCandidateId(Long candidateId) {
         this.candidateId = candidateId;
     }

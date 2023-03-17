@@ -24,4 +24,8 @@ public class CandidateSkillService {
     public void delete(CandidateSkill candidateSkill) {
         candidateSkillRepository.delete(candidateSkill);
     }
+
+    public List<CandidateSkill> findBySkillId(Long id) {
+        return candidateSkillRepository.findBySkillId(id);
+    }
 }

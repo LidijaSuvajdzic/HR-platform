@@ -31,10 +31,10 @@ public class CandidateController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    @DeleteMapping("/")
-    public ResponseEntity<?> delete(@RequestBody CandidateNameDto candidateNameDto) {
-        if (candidateService.isExists(candidateNameDto.getFirstName(),candidateNameDto.getLastName())) {
-            candidateService.delete(candidateNameDto.getFirstName(),candidateNameDto.getLastName());
+    @DeleteMapping("/{firstname}/{lastname}")
+    public ResponseEntity<?> delete(@PathVariable String firstname, @PathVariable String lastname) {
+        if (candidateService.isExists(firstname,lastname)) {
+            candidateService.delete(firstname,lastname);
             return new ResponseEntity<>(HttpStatus.OK);
         }else
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -60,5 +60,9 @@ public class CandidateController {
         CandidateDto candidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
         return new ResponseEntity<>(candidateDto, HttpStatus.OK);
     }
-
+    @GetMapping("/skillName/{skillName}")
+    public ResponseEntity<?> findCandidatesBySkillName(@PathVariable String skillName) {
+        List<CandidateDto> candidatesDto = candidateService.findBySkillName(skillName);
+        return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
+    }
 }

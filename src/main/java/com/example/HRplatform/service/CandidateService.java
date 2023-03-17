@@ -107,4 +107,30 @@ public class CandidateService {
         CandidateDto candidateDto = new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills);
         return candidateDto;
     }
+
+        public List<CandidateDto> findBySkillName(String skillName) {
+        List<CandidateDto> candidatesDto = new ArrayList<>();
+        Skill skill = skillService.findByName(skillName);
+        if(skill == null) {
+           return candidatesDto;
+        }
+        List<CandidateSkill> candidateSkills = candidateSkillService.findBySkillId(skill.getId());
+        List<Candidate> candidates = new ArrayList<>();
+        for (CandidateSkill candidateSkill: candidateSkills) {
+            candidates.add(candidateRepository.findByCandidateId(candidateSkill.getCandidateId()));
+        }
+        for(Candidate candidate: candidates) {
+            List<CandidateSkill> cSkills = candidateSkillService.findByCandidateId(candidate.getId());
+            List<Skill> skills = new ArrayList<>();
+            for(CandidateSkill candidateSkill: cSkills) {
+                skills.add(skillService.findById(candidateSkill.getSkillId()));
+            }
+            List<String> skillsToString = new ArrayList<>();
+            for(Skill s: skills) {
+                skillsToString.add(s.getName());
+            }
+            candidatesDto.add(new CandidateDto(candidate.getFirstname(),candidate.getLastname(),candidate.getEmail(),candidate.getPhoneNumber(),candidate.getDateOfBirth(),skillsToString));
+        }
+        return candidatesDto;
+    }
 }

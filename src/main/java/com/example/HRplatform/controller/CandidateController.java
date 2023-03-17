@@ -1,13 +1,15 @@
 package com.example.HRplatform.controller;
 import com.example.HRplatform.dto.CandidateDto;
+import com.example.HRplatform.dto.CandidateNameDto;
 import com.example.HRplatform.dto.RemoveSkillRequestDto;
 import com.example.HRplatform.service.CandidateService;
-import org.hibernate.Remove;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping(value="api/candidate")
@@ -29,10 +31,10 @@ public class CandidateController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    @DeleteMapping("/{firstname}/{lastname}")
-    public ResponseEntity<?> delete(@PathVariable String firstname, @PathVariable String lastname) {
-        if (candidateService.isExists(firstname,lastname)) {
-            candidateService.delete(firstname,lastname);
+    @DeleteMapping("/")
+    public ResponseEntity<?> delete(@RequestBody CandidateNameDto candidateNameDto) {
+        if (candidateService.isExists(candidateNameDto.getFirstName(),candidateNameDto.getLastName())) {
+            candidateService.delete(candidateNameDto.getFirstName(),candidateNameDto.getLastName());
             return new ResponseEntity<>(HttpStatus.OK);
         }else
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -46,4 +48,17 @@ public class CandidateController {
         }else
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
+
+    @GetMapping("/{firstname}")
+    public ResponseEntity<?> find(@PathVariable String firstname) {
+        List<CandidateDto> candidatesDto = candidateService.findByFirstname(firstname);
+        return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<?> find(@RequestBody CandidateNameDto candidateNameDto) {
+        CandidateDto candidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
+        return new ResponseEntity<>(candidateDto, HttpStatus.OK);
+    }
+
 }

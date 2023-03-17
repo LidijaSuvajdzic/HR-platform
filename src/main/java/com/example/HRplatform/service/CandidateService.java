@@ -8,6 +8,7 @@ import com.example.HRplatform.repository.CandidateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,7 +25,7 @@ public class CandidateService {
 
 
     public boolean save(CandidateDto candidateDto) {
-        if(candidateRepository.findByFirstNameAndLastName(candidateDto.getFirstname(),candidateDto.getLastname()) != null) {
+        if(candidateRepository.findByFirstnameAndLastname(candidateDto.getFirstname(),candidateDto.getLastname()) != null) {
             return true;
         }else {
             Candidate candidate = new Candidate(candidateDto.getFirstname(), candidateDto.getLastname(), candidateDto.getEmail(), candidateDto.getPhoneNumber(), candidateDto.getDate());
@@ -47,7 +48,7 @@ public class CandidateService {
     }
 
     public boolean isExists(String firstname, String lastname) {
-        if(candidateRepository.findByFirstNameAndLastName(firstname,lastname) != null) {
+        if(candidateRepository.findByFirstnameAndLastname(firstname,lastname) != null) {
             return true;
         }else {
             return false;
@@ -55,7 +56,7 @@ public class CandidateService {
     }
 
     public void delete(String firstname, String lastname) {
-        Candidate candidate = candidateRepository.findByFirstNameAndLastName(firstname, lastname);
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname, lastname);
         candidateRepository.delete(candidate);
         List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
         for (CandidateSkill candidateSkill : candidateSkillServiceList) {
@@ -64,7 +65,7 @@ public class CandidateService {
     }
 
     public void removeSkillFromCandidate(RemoveSkillRequestDto removeSkillRequestDto) {
-        Candidate candidate = candidateRepository.findByFirstNameAndLastName(removeSkillRequestDto.getCandidateFirstname(), removeSkillRequestDto.getCandidateLastname());
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(removeSkillRequestDto.getCandidateFirstname(), removeSkillRequestDto.getCandidateLastname());
         Skill skill = skillService.findByName(removeSkillRequestDto.getSkillName());
         List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
         for (CandidateSkill candidateSkill : candidateSkillServiceList) {
@@ -72,5 +73,38 @@ public class CandidateService {
                candidateSkillService.delete(candidateSkill);
            }
         }
+    }
+
+    public List<CandidateDto> findByFirstname(String firstname) {
+        List<Candidate> candidates = candidateRepository.findByFirstname(firstname);
+        List<CandidateDto> candidatesDto = new ArrayList<>();
+        for (Candidate candidate : candidates) {
+            List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+            List<Skill> skills = new ArrayList<>();
+            for(CandidateSkill candidateSkill: candidateSkillServiceList) {
+                skills.add(skillService.findById(candidateSkill.getSkillId()));
+            }
+            List<String> candidateSkills = new ArrayList<>();
+            for (Skill skill: skills) {
+                candidateSkills.add(skill.getName());
+            }
+            candidatesDto.add(new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills));
+        }
+        return candidatesDto;
+    }
+
+    public CandidateDto findByFirstnameAndLastname(String firstname, String lastname) {
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname,lastname);
+        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+        List<Skill> skills = new ArrayList<>();
+        for(CandidateSkill candidateSkill: candidateSkillServiceList) {
+            skills.add(skillService.findById(candidateSkill.getSkillId()));
+        }
+        List<String> candidateSkills = new ArrayList<>();
+        for (Skill skill: skills) {
+            candidateSkills.add(skill.getName());
+        }
+        CandidateDto candidateDto = new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills);
+        return candidateDto;
     }
 }

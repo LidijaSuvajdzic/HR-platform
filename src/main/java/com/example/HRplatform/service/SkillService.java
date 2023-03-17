@@ -31,4 +31,8 @@ public class  SkillService {
     public void save(String skillName) {
         skillRepository.save(new Skill(skillName));
     }
+
+    public Skill findById(Long skillId) {
+        return skillRepository.findBySkillId(skillId);
+    }
 }

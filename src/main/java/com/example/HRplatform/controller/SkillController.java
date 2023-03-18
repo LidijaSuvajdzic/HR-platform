@@ -18,15 +18,9 @@ public class SkillController {
     private SkillService skillService;
 
     @PostMapping(value = "/")
-    public ResponseEntity<?> save(@RequestBody SkillDto skillDto){
-        if (skillDto != null){
-            boolean isExists = skillService.save(skillDto);
-            if (isExists) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }else
-                return new ResponseEntity<>(HttpStatus.OK);
-        }
-        else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> create(@RequestBody SkillDto skillDto){
+         skillService.save(skillDto);
+         return new ResponseEntity<>(HttpStatus.OK);
     }
+
 }

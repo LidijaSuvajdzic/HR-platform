@@ -1,9 +1,13 @@
 package com.example.HRplatform.service;
 import com.example.HRplatform.dto.SkillDto;
+import com.example.HRplatform.exceptions.SkillExistsException;
+import com.example.HRplatform.exceptions.SkillNotFoundException;
 import com.example.HRplatform.model.Skill;
 import com.example.HRplatform.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 public class  SkillService {
@@ -11,12 +15,16 @@ public class  SkillService {
     @Autowired
     private SkillRepository skillRepository;
 
-    public boolean save(SkillDto skillDto) {
-        if(skillRepository.findByName(skillDto.getName()) == null) {
-            skillRepository.save(new Skill(skillDto.getName()));
-            return false;
-        }else {
-            return true;
+    public void save(SkillDto skillDto) {
+        Skill skill = new Skill(skillDto.getName());
+        validateCreate(skill);
+        skillRepository.save(skill);
+    }
+
+    public void validateCreate(Skill skill) {
+        Objects.requireNonNull(skill);
+        if(skillRepository.findByName(skill.getName()).isPresent()) {
+            throw new SkillExistsException(skill.getName());
         }
     }
 
@@ -25,7 +33,7 @@ public class  SkillService {
     }
 
     public Skill findByName(String name) {
-        return skillRepository.findByName(name);
+        return skillRepository.findByName(name).orElseThrow(() -> new SkillNotFoundException(name));
     }
 
     public void save(String skillName) {
@@ -33,6 +41,6 @@ public class  SkillService {
     }
 
     public Skill findById(Long skillId) {
-        return skillRepository.findBySkillId(skillId);
+        return skillRepository.findById(skillId).orElseThrow(() -> new SkillNotFoundException(skillId));
     }
 }

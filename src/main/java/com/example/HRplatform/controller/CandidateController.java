@@ -1,5 +1,6 @@
 package com.example.HRplatform.controller;
 import com.example.HRplatform.dto.CandidateDto;
+import com.example.HRplatform.dto.NewCandidateDto;
 import com.example.HRplatform.dto.CandidateNameDto;
 import com.example.HRplatform.dto.RemoveSkillRequestDto;
 import com.example.HRplatform.service.CandidateService;
@@ -19,12 +20,22 @@ public class CandidateController {
     private CandidateService candidateService;
 
     @PostMapping("/")
-    public ResponseEntity<?> save(@RequestBody CandidateDto candidateDto) {
-        if (candidateDto != null){
-            boolean isExists = candidateService.save(candidateDto);
+    public ResponseEntity<?> addCandidate(@RequestBody NewCandidateDto newCandidateDto) {
+        if (newCandidateDto != null){
+            boolean isExists = candidateService.save(newCandidateDto);
             if (isExists) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }else
+                return new ResponseEntity<>(HttpStatus.OK);
+        }
+        else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @PutMapping("/")
+    public ResponseEntity<?> updateCandidate(@RequestBody CandidateDto candidateDto) {
+        if (candidateDto != null){
+                candidateService.updateCandidate(candidateDto);
                 return new ResponseEntity<>(HttpStatus.OK);
         }
         else
@@ -51,18 +62,18 @@ public class CandidateController {
 
     @GetMapping("/{firstname}")
     public ResponseEntity<?> find(@PathVariable String firstname) {
-        List<CandidateDto> candidatesDto = candidateService.findByFirstname(firstname);
+        List<NewCandidateDto> candidatesDto = candidateService.findByFirstname(firstname);
         return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
     }
 
     @GetMapping("/")
     public ResponseEntity<?> find(@RequestBody CandidateNameDto candidateNameDto) {
-        CandidateDto candidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
-        return new ResponseEntity<>(candidateDto, HttpStatus.OK);
+        NewCandidateDto newCandidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
+        return new ResponseEntity<>(newCandidateDto, HttpStatus.OK);
     }
     @GetMapping("/skillName/{skillName}")
     public ResponseEntity<?> findCandidatesBySkillName(@PathVariable String skillName) {
-        List<CandidateDto> candidatesDto = candidateService.findBySkillName(skillName);
+        List<NewCandidateDto> candidatesDto = candidateService.findBySkillName(skillName);
         return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
     }
 }

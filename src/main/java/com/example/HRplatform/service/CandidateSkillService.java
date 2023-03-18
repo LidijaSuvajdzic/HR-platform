@@ -28,4 +28,13 @@ public class CandidateSkillService {
     public List<CandidateSkill> findBySkillId(Long id) {
         return candidateSkillRepository.findBySkillId(id);
     }
+
+    public void delete(Long candidateId, Long skillId) {
+        CandidateSkill candidateSkill = candidateSkillRepository.findByIds(candidateId,skillId);
+        candidateSkillRepository.delete(candidateSkill);
+    }
+
+    public CandidateSkill findByIds(Long candidateId, Long skillId) {
+        return candidateSkillRepository.findByIds(candidateId, skillId);
+    }
 }

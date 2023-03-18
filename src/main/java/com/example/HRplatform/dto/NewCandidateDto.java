@@ -3,9 +3,7 @@ package com.example.HRplatform.dto;
 import java.util.Date;
 import java.util.List;
 
-public class CandidateDto {
-    private String oldFirstname;
-    private String oldLastname;
+public class NewCandidateDto {
     private String firstname;
     private String lastname;
     private String email;
@@ -13,31 +11,13 @@ public class CandidateDto {
     private Date date;
     private List<String> skills;
 
-    public CandidateDto(String oldFirstname, String oldLastname, String firstname, String lastname, String email, String phoneNumber, Date date, List<String> skills) {
-        this.oldFirstname = oldFirstname;
-        this.oldLastname = oldLastname;
+    public NewCandidateDto(String firstname, String lastname, String email, String phoneNumber, Date date, List<String> skills) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.date = date;
         this.skills = skills;
-    }
-
-    public String getOldFirstname() {
-        return oldFirstname;
-    }
-
-    public void setOldFirstname(String oldFirstname) {
-        this.oldFirstname = oldFirstname;
-    }
-
-    public String getOldLastname() {
-        return oldLastname;
-    }
-
-    public void setOldLastname(String oldLastname) {
-        this.oldLastname = oldLastname;
     }
 
     public String getFirstname() {

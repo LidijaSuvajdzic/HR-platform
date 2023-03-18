@@ -1,5 +1,6 @@
 package com.example.HRplatform.service;
 import com.example.HRplatform.dto.CandidateDto;
+import com.example.HRplatform.dto.NewCandidateDto;
 import com.example.HRplatform.dto.RemoveSkillRequestDto;
 import com.example.HRplatform.model.Candidate;
 import com.example.HRplatform.model.CandidateSkill;
@@ -24,13 +25,13 @@ public class CandidateService {
     CandidateSkillService candidateSkillService;
 
 
-    public boolean save(CandidateDto candidateDto) {
-        if(candidateRepository.findByFirstnameAndLastname(candidateDto.getFirstname(),candidateDto.getLastname()) != null) {
+    public boolean save(NewCandidateDto newCandidateDto) {
+        if(candidateRepository.findByFirstnameAndLastname(newCandidateDto.getFirstname(), newCandidateDto.getLastname()) != null) {
             return true;
         }else {
-            Candidate candidate = new Candidate(candidateDto.getFirstname(), candidateDto.getLastname(), candidateDto.getEmail(), candidateDto.getPhoneNumber(), candidateDto.getDate());
+            Candidate candidate = new Candidate(newCandidateDto.getFirstname(), newCandidateDto.getLastname(), newCandidateDto.getEmail(), newCandidateDto.getPhoneNumber(), newCandidateDto.getDate());
             candidateRepository.save(candidate);
-            for (String skillName : candidateDto.getSkills()) {
+            for (String skillName : newCandidateDto.getSkills()) {
                 if (skillService.findByName(skillName) == null) {
                     Skill newSkill = new Skill(skillName);
                     skillService.save(newSkill);
@@ -44,6 +45,55 @@ public class CandidateService {
                 }
             }
             return false;
+        }
+    }
+
+    public void updateCandidate(CandidateDto candidateDto) {
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(candidateDto.getOldFirstname(),candidateDto.getOldLastname());
+        candidate.setFirstname(candidateDto.getFirstname());
+        candidate.setLastname(candidate.getLastname());
+        candidate.setEmail(candidateDto.getEmail());
+        candidate.setDateOfBirth(candidateDto.getDate());
+        candidate.setPhoneNumber(candidateDto.getPhoneNumber());
+        candidateRepository.save(candidate);
+        List<CandidateSkill> oldCandidateSkills = candidateSkillService.findByCandidateId(candidate.getId());
+        List<Skill> oldSkills = new ArrayList<>();
+        for(CandidateSkill candidateSkill: oldCandidateSkills) {
+            oldSkills.add(skillService.findById(candidateSkill.getSkillId()));
+        }
+        List<String> newSkillsToString = candidateDto.getSkills();
+        List<Skill> newSkills = new ArrayList<>();
+        for(String s: newSkillsToString) {
+            if(skillService.findByName(s) == null) {
+                Skill newSkill = new Skill(s);
+                skillService.save(newSkill);
+                newSkills.add(skillService.findByName(s));
+            }else {
+                newSkills.add(skillService.findByName(s));
+            }
+        }
+        for(Skill oldSkill: oldSkills) {
+            boolean isExists = false;
+            for(Skill newSkill: newSkills) {
+                if(oldSkill.getName().equals(newSkill.getName())) {
+                    isExists=true;
+                }
+            }
+            if(!isExists) {
+                candidateSkillService.delete(candidate.getId(), oldSkill.getId());
+            }
+        }
+        for(Skill newSkill: newSkills) {
+                if(skillService.findByName(newSkill.getName()) == null) {
+                    skillService.save(newSkill);
+                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(),newSkill.getId());
+                    candidateSkillService.save(candidateSkill);
+                }else {
+                    if (candidateSkillService.findByIds(candidate.getId(), newSkill.getId()) == null) {
+                        CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
+                        candidateSkillService.save(candidateSkill);
+                    }
+                }
         }
     }
 
@@ -75,9 +125,9 @@ public class CandidateService {
         }
     }
 
-    public List<CandidateDto> findByFirstname(String firstname) {
+    public List<NewCandidateDto> findByFirstname(String firstname) {
         List<Candidate> candidates = candidateRepository.findByFirstname(firstname);
-        List<CandidateDto> candidatesDto = new ArrayList<>();
+        List<NewCandidateDto> candidatesDto = new ArrayList<>();
         for (Candidate candidate : candidates) {
             List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
             List<Skill> skills = new ArrayList<>();
@@ -88,12 +138,12 @@ public class CandidateService {
             for (Skill skill: skills) {
                 candidateSkills.add(skill.getName());
             }
-            candidatesDto.add(new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills));
+            candidatesDto.add(new NewCandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills));
         }
         return candidatesDto;
     }
 
-    public CandidateDto findByFirstnameAndLastname(String firstname, String lastname) {
+    public NewCandidateDto findByFirstnameAndLastname(String firstname, String lastname) {
         Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname,lastname);
         List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
         List<Skill> skills = new ArrayList<>();
@@ -104,12 +154,12 @@ public class CandidateService {
         for (Skill skill: skills) {
             candidateSkills.add(skill.getName());
         }
-        CandidateDto candidateDto = new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills);
-        return candidateDto;
+        NewCandidateDto newCandidateDto = new NewCandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills);
+        return newCandidateDto;
     }
 
-        public List<CandidateDto> findBySkillName(String skillName) {
-        List<CandidateDto> candidatesDto = new ArrayList<>();
+        public List<NewCandidateDto> findBySkillName(String skillName) {
+        List<NewCandidateDto> candidatesDto = new ArrayList<>();
         Skill skill = skillService.findByName(skillName);
         if(skill == null) {
            return candidatesDto;
@@ -129,7 +179,7 @@ public class CandidateService {
             for(Skill s: skills) {
                 skillsToString.add(s.getName());
             }
-            candidatesDto.add(new CandidateDto(candidate.getFirstname(),candidate.getLastname(),candidate.getEmail(),candidate.getPhoneNumber(),candidate.getDateOfBirth(),skillsToString));
+            candidatesDto.add(new NewCandidateDto(candidate.getFirstname(),candidate.getLastname(),candidate.getEmail(),candidate.getPhoneNumber(),candidate.getDateOfBirth(),skillsToString));
         }
         return candidatesDto;
     }

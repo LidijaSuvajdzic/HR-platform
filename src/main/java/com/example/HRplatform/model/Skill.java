@@ -1,15 +1,13 @@
 package com.example.HRplatform.model;
 
+import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Skill {
@@ -18,13 +16,9 @@ public class Skill {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column
-    @NotBlank
+    @Column(unique = true)
+    @NotNull
     private String name;
-
-    @OneToMany(mappedBy = "skillId")
-    private List<CandidateSkill> candidates;
-
 
     public Skill(String name) {
         this.name = name;

@@ -1,28 +1,30 @@
 package com.example.HRplatform.model;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CandidateSkill {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "candidate_id")
-    private Long candidateId;
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    private Candidate candidate;
 
-    @Column(name = "skill_id")
-    private Long skillId;
+    @ManyToOne
+    @JoinColumn(name = "skill_id")
+    private Skill skill;
 
-    public CandidateSkill(Long candidateId, Long skillId) {
-        this.candidateId = candidateId;
-        this.skillId = skillId;
+    public CandidateSkill(Candidate candidate, Skill skill) {
+        this.candidate = candidate;
+        this.skill = skill;
     }
 }

@@ -2,23 +2,17 @@ package com.example.HRplatform.repository;
 
 import com.example.HRplatform.model.Candidate;
 import com.example.HRplatform.model.CandidateSkill;
+import com.example.HRplatform.model.Skill;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
 public interface CandidateSkillRepository extends JpaRepository<CandidateSkill, Long> {
 
-    CandidateSkill save(CandidateSkill candidateSkill);
+    Optional<CandidateSkill> findByCandidateAndSkill(Candidate candidate, Skill skill);
 
-    @Query("SELECT cs FROM CandidateSkill cs WHERE cs.candidateId = ?1")
-    List<CandidateSkill> findByCandidateId(Long id);
+    List<CandidateSkill> findAllByCandidate(Candidate candidate);
 
-    @Query("SELECT cs FROM CandidateSkill cs WHERE cs.skillId = ?1")
-    List<CandidateSkill> findBySkillId(Long id);
-
-    @Query("SELECT cs FROM CandidateSkill cs WHERE cs.candidateId = ?1 and cs.skillId=?2")
-    CandidateSkill findByIds(Long candidateId, Long skillId);
+    List<CandidateSkill> findAllBySkill(Skill skill);
 }

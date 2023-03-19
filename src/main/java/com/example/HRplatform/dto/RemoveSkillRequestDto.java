@@ -1,29 +1,17 @@
 package com.example.HRplatform.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.util.UUID;
+
+@Data
+@AllArgsConstructor
 public class RemoveSkillRequestDto {
 
-    private String candidateEmail;
-
+    @NotNull
+    private UUID candidateUuid;
+    @NotBlank
     private String skillName;
-
-    public RemoveSkillRequestDto(String candidateEmail, String skillName) {
-        this.candidateEmail = candidateEmail;
-        this.skillName = skillName;
-    }
-
-    public String getCandidateEmail() {
-        return candidateEmail;
-    }
-
-    public void setCandidateEmail(String candidateEmail) {
-        this.candidateEmail = candidateEmail;
-    }
-
-    public String getSkillName() {
-        return skillName;
-    }
-
-    public void setSkillName(String skillName) {
-        this.skillName = skillName;
-    }
 }

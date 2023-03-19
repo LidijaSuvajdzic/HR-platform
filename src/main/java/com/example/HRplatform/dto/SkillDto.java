@@ -1,7 +1,8 @@
 package com.example.HRplatform.dto;
 
 public class SkillDto {
-    String name;
+
+    private String name;
 
     public String getName() {
         return name;

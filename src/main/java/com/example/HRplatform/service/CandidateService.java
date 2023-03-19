@@ -1,77 +1,128 @@
 package com.example.HRplatform.service;
 import com.example.HRplatform.dto.CandidateDto;
-import com.example.HRplatform.dto.NewCandidateDto;
 import com.example.HRplatform.dto.RemoveSkillRequestDto;
+import com.example.HRplatform.dto.SkillsDto;
+import com.example.HRplatform.dto.UpdatedCandidateDto;
+import com.example.HRplatform.exceptions.CandidateExistsException;
+import com.example.HRplatform.exceptions.CandidateNotFoundException;
 import com.example.HRplatform.model.Candidate;
 import com.example.HRplatform.model.CandidateSkill;
 import com.example.HRplatform.model.Skill;
 import com.example.HRplatform.repository.CandidateRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.print.DocFlavor;
+import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class CandidateService {
 
-    @Autowired
-    CandidateRepository candidateRepository;
+    private final CandidateRepository candidateRepository;
+    private final SkillService skillService;
+    private final CandidateSkillService candidateSkillService;
 
-    @Autowired
-    SkillService skillService;
+    @Transactional
+    public void create(CandidateDto candidateDto) {
+        Candidate candidate = new Candidate(candidateDto.getFirstname(), candidateDto.getLastname(), candidateDto.getEmail(), candidateDto.getPhoneNumber(), candidateDto.getDate());
+        if (candidateRepository.findByEmail(candidate.getEmail()).isPresent()) {
+            throw new CandidateExistsException(candidate.getEmail());
+        }
+        candidateRepository.save(candidate);
+        List<CandidateSkill> candidateSkills = getCandidateSkills(candidate, candidateDto.getSkills());
+        candidate.setSkills(candidateSkills);
+        candidateRepository.save(candidate);
+    }
 
-    @Autowired
-    CandidateSkillService candidateSkillService;
-
-
-    public boolean save(NewCandidateDto newCandidateDto) {
-        if(candidateRepository.findByFirstnameAndLastname(newCandidateDto.getFirstname(), newCandidateDto.getLastname()) != null) {
-            return true;
-        }else {
-            Candidate candidate = new Candidate(newCandidateDto.getFirstname(), newCandidateDto.getLastname(), newCandidateDto.getEmail(), newCandidateDto.getPhoneNumber(), newCandidateDto.getDate());
-            candidateRepository.save(candidate);
-            for (String skillName : newCandidateDto.getSkills()) {
-                if (skillService.findByName(skillName) == null) {
-                    Skill newSkill = new Skill(skillName);
-                    skillService.save(newSkill);
-                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
-                    candidateSkillService.save(candidateSkill);
-                } else {
-                    Skill newSkill = skillService.findByName(skillName);
-                    skillService.save(newSkill);
-                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
-                    candidateSkillService.save(candidateSkill);
-                }
+    private List<CandidateSkill> getCandidateSkills(Candidate candidate, List<String> skillsToString) {
+        List<CandidateSkill> candidateSkills = new ArrayList<>();
+        for (String skillName : skillsToString) {
+            Skill newSkill = new Skill();
+            if (skillService.getSkillByName(skillName) == null) {
+                newSkill.setName(skillName);
+                skillService.save(newSkill);
+            } else {
+                newSkill = skillService.findByName(skillName);
             }
-            return false;
+            CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
+            candidateSkillService.save(candidateSkill);
+            candidateSkills.add(candidateSkill);
+        }
+        return candidateSkills;
+    }
+
+    @Transactional
+    public void delete(String email) {
+        if (!candidateRepository.existsByEmail(email)) {
+            throw new CandidateNotFoundException(email);
+        }
+        Optional<Candidate> candidate = candidateRepository.findByEmail(email);
+        candidate.ifPresent(candidateRepository::delete);
+        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.map(Candidate::getId).orElse(null));
+        for (CandidateSkill candidateSkill : candidateSkillServiceList) {
+            candidateSkillService.delete(candidateSkill);
         }
     }
 
-    public void updateCandidate(CandidateDto candidateDto) {
-        Candidate candidate = candidateRepository.findByFirstnameAndLastname(candidateDto.getOldFirstname(),candidateDto.getOldLastname());
-        candidate.setFirstname(candidateDto.getFirstname());
-        candidate.setLastname(candidate.getLastname());
-        candidate.setEmail(candidateDto.getEmail());
-        candidate.setDateOfBirth(candidateDto.getDate());
-        candidate.setPhoneNumber(candidateDto.getPhoneNumber());
-        candidateRepository.save(candidate);
+    @Transactional
+    public void updateCandidate(UpdatedCandidateDto updatedCandidateDto) {
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(updatedCandidateDto.getOldFirstname(),updatedCandidateDto.getOldLastname()).orElseThrow(() -> new CandidateNotFoundException(updatedCandidateDto.getOldFirstname(),updatedCandidateDto.getOldLastname()));
         List<CandidateSkill> oldCandidateSkills = candidateSkillService.findByCandidateId(candidate.getId());
         List<Skill> oldSkills = new ArrayList<>();
         for(CandidateSkill candidateSkill: oldCandidateSkills) {
             oldSkills.add(skillService.findById(candidateSkill.getSkillId()));
         }
-        List<String> newSkillsToString = candidateDto.getSkills();
-        List<Skill> newSkills = new ArrayList<>();
-        for(String s: newSkillsToString) {
-            if(skillService.findByName(s) == null) {
-                Skill newSkill = new Skill(s);
+        List<String> newSkillsToString = updatedCandidateDto.getSkills();
+        List<Skill> newSkills = getNewSkills(newSkillsToString);
+        removeOldSkills(oldSkills,newSkills,candidate.getId());
+        List<CandidateSkill> candidateSkills = addNewCandidateSkills(newSkills,candidate.getId());
+        setUpdatedCandidate(updatedCandidateDto,candidateSkills,candidate);
+    }
+
+    private void setUpdatedCandidate(UpdatedCandidateDto updatedCandidateDto, List<CandidateSkill> candidateSkills,Candidate candidate) {
+        candidate.setFirstname(updatedCandidateDto.getFirstname());
+        candidate.setLastname(updatedCandidateDto.getLastname());
+        candidate.setEmail(updatedCandidateDto.getEmail());
+        candidate.setDateOfBirth(updatedCandidateDto.getDate());
+        candidate.setPhoneNumber(updatedCandidateDto.getPhoneNumber());
+        candidate.setSkills(candidateSkills);
+        candidateRepository.save(candidate);
+    }
+
+    private List<CandidateSkill> addNewCandidateSkills(List<Skill> newSkills, Long id) {
+        List<CandidateSkill> candidateSkills = new ArrayList<>();
+        for(Skill newSkill: newSkills) {
+            if(skillService.getSkillByName(newSkill.getName()) == null) {
                 skillService.save(newSkill);
-                newSkills.add(skillService.findByName(s));
+                CandidateSkill candidateSkill = new CandidateSkill(id,newSkill.getId());
+                candidateSkillService.save(candidateSkill);
+                candidateSkills.add(candidateSkill);
             }else {
-                newSkills.add(skillService.findByName(s));
+                if (candidateSkillService.findByIds(id, newSkill.getId()) == null) {
+                    CandidateSkill candidateSkill = new CandidateSkill(id, newSkill.getId());
+                    candidateSkillService.save(candidateSkill);
+                    candidateSkills.add(candidateSkill);
+                }
             }
         }
+        return candidateSkills;
+    }
+
+    private List<Skill> getNewSkills(List<String> newSkillsToString) {
+        List<Skill> newSkills = new ArrayList<>();
+        for(String s: newSkillsToString) {
+            if(skillService.getSkillByName(s) == null) {
+                Skill newSkill = new Skill(s);
+                skillService.save(newSkill);
+            }
+            newSkills.add(skillService.findByName(s));
+        }
+        return newSkills;
+    }
+
+    private void removeOldSkills(List<Skill> oldSkills,List<Skill> newSkills, Long id) {
         for(Skill oldSkill: oldSkills) {
             boolean isExists = false;
             for(Skill newSkill: newSkills) {
@@ -80,107 +131,80 @@ public class CandidateService {
                 }
             }
             if(!isExists) {
-                candidateSkillService.delete(candidate.getId(), oldSkill.getId());
+                candidateSkillService.delete(id, oldSkill.getId());
             }
         }
-        for(Skill newSkill: newSkills) {
-                if(skillService.findByName(newSkill.getName()) == null) {
-                    skillService.save(newSkill);
-                    CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(),newSkill.getId());
-                    candidateSkillService.save(candidateSkill);
-                }else {
-                    if (candidateSkillService.findByIds(candidate.getId(), newSkill.getId()) == null) {
-                        CandidateSkill candidateSkill = new CandidateSkill(candidate.getId(), newSkill.getId());
-                        candidateSkillService.save(candidateSkill);
-                    }
-                }
-        }
     }
 
-    public boolean isExists(String firstname, String lastname) {
-        if(candidateRepository.findByFirstnameAndLastname(firstname,lastname) != null) {
-            return true;
-        }else {
-            return false;
-        }
-    }
-
-    public void delete(String firstname, String lastname) {
-        Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname, lastname);
-        candidateRepository.delete(candidate);
-        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
-        for (CandidateSkill candidateSkill : candidateSkillServiceList) {
-            candidateSkillService.delete(candidateSkill);
-        }
-    }
-
+    @Transactional
     public void removeSkillFromCandidate(RemoveSkillRequestDto removeSkillRequestDto) {
-        Candidate candidate = candidateRepository.findByFirstnameAndLastname(removeSkillRequestDto.getCandidateFirstname(), removeSkillRequestDto.getCandidateLastname());
+        Optional<Candidate> candidate = candidateRepository.findByEmail(removeSkillRequestDto.getCandidateEmail());
         Skill skill = skillService.findByName(removeSkillRequestDto.getSkillName());
-        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.map(Candidate::getId).orElse(null));
         for (CandidateSkill candidateSkill : candidateSkillServiceList) {
-           if(skill.getId() == candidateSkill.getSkillId() && candidateSkill.getCandidateId() == candidate.getId()) {
-               candidateSkillService.delete(candidateSkill);
-           }
+            if (skill.getId() == candidateSkill.getSkillId() && candidateSkill.getCandidateId() == candidate.map(Candidate::getId).orElse(null)) {
+                candidateSkillService.delete(candidateSkill);
+            }
         }
     }
 
-    public List<NewCandidateDto> findByFirstname(String firstname) {
-        List<Candidate> candidates = candidateRepository.findByFirstname(firstname);
-        List<NewCandidateDto> candidatesDto = new ArrayList<>();
+    @Transactional
+    public List<CandidateDto> findByFirstname(String firstname) {
+        List<Candidate> candidates = candidateRepository.findByFirstname(firstname).orElseThrow(() -> new CandidateNotFoundException(firstname, " "));
+        List<CandidateDto> candidatesDto = new ArrayList<>();
+
         for (Candidate candidate : candidates) {
-            List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
-            List<Skill> skills = new ArrayList<>();
-            for(CandidateSkill candidateSkill: candidateSkillServiceList) {
-                skills.add(skillService.findById(candidateSkill.getSkillId()));
-            }
-            List<String> candidateSkills = new ArrayList<>();
-            for (Skill skill: skills) {
-                candidateSkills.add(skill.getName());
-            }
-            candidatesDto.add(new NewCandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills));
+            List<CandidateSkill> candidateSkillServiceList = candidate.getSkills();
+            List<String> candidateSkillsToString = getCandidateSkills(candidateSkillServiceList);
+            candidatesDto.add(new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkillsToString));
         }
         return candidatesDto;
     }
 
-    public NewCandidateDto findByFirstnameAndLastname(String firstname, String lastname) {
-        Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname,lastname);
-        List<CandidateSkill> candidateSkillServiceList = candidateSkillService.findByCandidateId(candidate.getId());
+    @Transactional
+    public CandidateDto findByFirstnameAndLastname(String firstname, String lastname) {
+        Candidate candidate = candidateRepository.findByFirstnameAndLastname(firstname, lastname).orElseThrow(() -> new CandidateNotFoundException(firstname, lastname));
+        List<CandidateSkill> candidateSkills = candidate.getSkills();
+        List<String> candidateSkillsToString = getCandidateSkills(candidateSkills);
+        CandidateDto CandidateDto = new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkillsToString);
+        return CandidateDto;
+    }
+
+    private List<String> getCandidateSkills(List<CandidateSkill> candidateSkills) {
+        List<String> candidateSkillsToString = new ArrayList<>();
+        for (CandidateSkill candidateSkill : candidateSkills) {
+            Skill skill = skillService.findById(candidateSkill.getSkillId());
+            candidateSkillsToString.add(skill.getName());
+        }
+        return candidateSkillsToString;
+    }
+
+    @Transactional
+    public List<CandidateDto> findBySkillsName(SkillsDto skillsDto) {
+        List<CandidateDto> candidatesDto = new ArrayList<>();
+        List<Skill> skills = convertSkillsDtoToSkills(skillsDto);
+        for (Skill s : skills) {
+            List<CandidateSkill> cs = candidateSkillService.findBySkillId(s.getId());
+            List<Candidate> candidates = new ArrayList<>();
+            for (CandidateSkill candidateSkill : cs) {
+                Candidate candidate = candidateRepository.findById(candidateSkill.getCandidateId()).orElse(null);
+                candidates.add(candidate);
+            }
+            for (Candidate candidate : candidates) {
+                List<CandidateSkill> cSkills = candidate.getSkills();
+                List<String> cSkillsToString = getCandidateSkills(cSkills);
+                candidatesDto.add(new CandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), cSkillsToString));
+            }
+        }
+            return candidatesDto;
+    }
+
+    private List<Skill> convertSkillsDtoToSkills(SkillsDto skillsDto) {
         List<Skill> skills = new ArrayList<>();
-        for(CandidateSkill candidateSkill: candidateSkillServiceList) {
-            skills.add(skillService.findById(candidateSkill.getSkillId()));
+        for(String skillName: skillsDto.getSkills()) {
+            Skill skill = skillService.findByName(skillName);
+            skills.add(skill);
         }
-        List<String> candidateSkills = new ArrayList<>();
-        for (Skill skill: skills) {
-            candidateSkills.add(skill.getName());
-        }
-        NewCandidateDto newCandidateDto = new NewCandidateDto(candidate.getFirstname(), candidate.getLastname(), candidate.getEmail(), candidate.getPhoneNumber(), candidate.getDateOfBirth(), candidateSkills);
-        return newCandidateDto;
-    }
-
-        public List<NewCandidateDto> findBySkillName(String skillName) {
-        List<NewCandidateDto> candidatesDto = new ArrayList<>();
-        Skill skill = skillService.findByName(skillName);
-        if(skill == null) {
-           return candidatesDto;
-        }
-        List<CandidateSkill> candidateSkills = candidateSkillService.findBySkillId(skill.getId());
-        List<Candidate> candidates = new ArrayList<>();
-        for (CandidateSkill candidateSkill: candidateSkills) {
-            candidates.add(candidateRepository.findByCandidateId(candidateSkill.getCandidateId()));
-        }
-        for(Candidate candidate: candidates) {
-            List<CandidateSkill> cSkills = candidateSkillService.findByCandidateId(candidate.getId());
-            List<Skill> skills = new ArrayList<>();
-            for(CandidateSkill candidateSkill: cSkills) {
-                skills.add(skillService.findById(candidateSkill.getSkillId()));
-            }
-            List<String> skillsToString = new ArrayList<>();
-            for(Skill s: skills) {
-                skillsToString.add(s.getName());
-            }
-            candidatesDto.add(new NewCandidateDto(candidate.getFirstname(),candidate.getLastname(),candidate.getEmail(),candidate.getPhoneNumber(),candidate.getDateOfBirth(),skillsToString));
-        }
-        return candidatesDto;
+        return skills;
     }
 }

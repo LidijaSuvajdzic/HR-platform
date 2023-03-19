@@ -2,32 +2,21 @@ package com.example.HRplatform.dto;
 
 public class RemoveSkillRequestDto {
 
-    private String candidateFirstname;
-
-    private String candidateLastname;
+    private String candidateEmail;
 
     private String skillName;
 
-    public RemoveSkillRequestDto(String candidateFirstname, String candidateLastname, String skillName) {
-        this.candidateFirstname = candidateFirstname;
-        this.candidateLastname = candidateLastname;
+    public RemoveSkillRequestDto(String candidateEmail, String skillName) {
+        this.candidateEmail = candidateEmail;
         this.skillName = skillName;
     }
 
-    public String getCandidateFirstname() {
-        return candidateFirstname;
+    public String getCandidateEmail() {
+        return candidateEmail;
     }
 
-    public void setCandidateFirstname(String candidateFirstname) {
-        this.candidateFirstname = candidateFirstname;
-    }
-
-    public String getCandidateLastname() {
-        return candidateLastname;
-    }
-
-    public void setCandidateLastname(String candidateLastname) {
-        this.candidateLastname = candidateLastname;
+    public void setCandidateEmail(String candidateEmail) {
+        this.candidateEmail = candidateEmail;
     }
 
     public String getSkillName() {

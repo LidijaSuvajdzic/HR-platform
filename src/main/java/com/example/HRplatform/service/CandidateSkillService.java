@@ -2,16 +2,17 @@ package com.example.HRplatform.service;
 
 import com.example.HRplatform.model.CandidateSkill;
 import com.example.HRplatform.repository.CandidateSkillRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CandidateSkillService {
 
-    @Autowired
-    CandidateSkillRepository candidateSkillRepository;
+    private final CandidateSkillRepository candidateSkillRepository;
 
     public void save(CandidateSkill candidateSkill) {
         candidateSkillRepository.save(candidateSkill);

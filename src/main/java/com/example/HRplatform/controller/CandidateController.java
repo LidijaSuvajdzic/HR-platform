@@ -1,10 +1,7 @@
 package com.example.HRplatform.controller;
-import com.example.HRplatform.dto.CandidateDto;
-import com.example.HRplatform.dto.NewCandidateDto;
-import com.example.HRplatform.dto.CandidateNameDto;
-import com.example.HRplatform.dto.RemoveSkillRequestDto;
+import com.example.HRplatform.dto.*;
 import com.example.HRplatform.service.CandidateService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -14,66 +11,50 @@ import java.util.List;
 
 @Controller
 @RequestMapping(value="api/candidate")
+@RequiredArgsConstructor
 public class CandidateController {
 
-    @Autowired
-    private CandidateService candidateService;
+    private final CandidateService candidateService;
 
     @PostMapping("/")
-    public ResponseEntity<?> addCandidate(@RequestBody NewCandidateDto newCandidateDto) {
-        if (newCandidateDto != null){
-            boolean isExists = candidateService.save(newCandidateDto);
-            if (isExists) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }else
-                return new ResponseEntity<>(HttpStatus.OK);
-        }
-        else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> create(@RequestBody CandidateDto candidateDto) {
+        candidateService.create(candidateDto);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/")
-    public ResponseEntity<?> updateCandidate(@RequestBody CandidateDto candidateDto) {
-        if (candidateDto != null){
-                candidateService.updateCandidate(candidateDto);
-                return new ResponseEntity<>(HttpStatus.OK);
-        }
-        else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> updateCandidate(@RequestBody UpdatedCandidateDto updatedCandidateDto) {
+       candidateService.updateCandidate(updatedCandidateDto);
+       return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/{firstname}/{lastname}")
-    public ResponseEntity<?> delete(@PathVariable String firstname, @PathVariable String lastname) {
-        if (candidateService.isExists(firstname,lastname)) {
-            candidateService.delete(firstname,lastname);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    @DeleteMapping("/{email}")
+    public ResponseEntity<?> delete(@PathVariable String email) {
+        candidateService.delete(email);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/")
-    public ResponseEntity<?> delete(@RequestBody RemoveSkillRequestDto removeSkillRequestDto) {
-        if (removeSkillRequestDto != null) {
-            candidateService.removeSkillFromCandidate(removeSkillRequestDto);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> removeSkillFromCandidate(@RequestBody RemoveSkillRequestDto removeSkillRequestDto) {
+        candidateService.removeSkillFromCandidate(removeSkillRequestDto);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/{firstname}")
     public ResponseEntity<?> find(@PathVariable String firstname) {
-        List<NewCandidateDto> candidatesDto = candidateService.findByFirstname(firstname);
+        List<CandidateDto> candidatesDto = candidateService.findByFirstname(firstname);
         return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
     }
 
     @GetMapping("/")
     public ResponseEntity<?> find(@RequestBody CandidateNameDto candidateNameDto) {
-        NewCandidateDto newCandidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
+        CandidateDto newCandidateDto = candidateService.findByFirstnameAndLastname(candidateNameDto.getFirstName(), candidateNameDto.getLastName());
         return new ResponseEntity<>(newCandidateDto, HttpStatus.OK);
     }
-    @GetMapping("/skillName/{skillName}")
-    public ResponseEntity<?> findCandidatesBySkillName(@PathVariable String skillName) {
-        List<NewCandidateDto> candidatesDto = candidateService.findBySkillName(skillName);
+
+    @GetMapping("/skill/")
+    public ResponseEntity<?> findCandidatesBySkillNames(@RequestBody SkillsDto skillsDto) {
+        List<CandidateDto> candidatesDto = candidateService.findBySkillsName(skillsDto);
         return new ResponseEntity<>(candidatesDto, HttpStatus.OK);
     }
 }

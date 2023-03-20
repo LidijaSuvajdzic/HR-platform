@@ -65,7 +65,7 @@ public class CandidateService {
     }
 
     @Transactional(readOnly = true)
-    public List<Candidate> findAllBySkills(final List<String> skillNames) {
+    public List<Candidate> findAllBySkills(List<String> skillNames) {
         skillNames.replaceAll(String::toUpperCase);
         return candidateRepository.findAllBySkillNames(skillNames);
     }

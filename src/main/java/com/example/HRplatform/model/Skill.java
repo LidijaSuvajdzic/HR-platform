@@ -1,17 +1,26 @@
 package com.example.HRplatform.model;
 
+import lombok.*;
 import jakarta.persistence.*;
-import java.util.UUID;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name="skills")
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Skill {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="id", nullable=false)
-    private UUID id;
+    private Long id;
 
-    @Column(name="name", nullable=false)
+    @Column(unique = true)
+    @NotNull
     private String name;
+
+    public Skill(String name) {
+        this.name = name;
+    }
 }

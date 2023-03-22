@@ -1,34 +1,45 @@
 package com.example.HRplatform.model;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name="candidates")
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Candidate {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="id", nullable=false)
-    private UUID id;
+    private Long id;
 
-    @Column(name="firstname", nullable=false)
-    private String firstname;
+    @NotNull
+    @Builder.Default
+    @EqualsAndHashCode.Include
+    @Column(nullable = false, unique = true)
+    private UUID uuid = UUID.randomUUID();
 
-    @Column(name="lastname", nullable=false)
-    private String lastname;
+    @Column
+    @NotNull
+    private String name;
 
-    @Column(name="email", nullable=false)
+    @Column(unique = true)
     private String email;
 
-    @Column(name="phoneNumber", nullable=false)
     private String phoneNumber;
 
-    @Column(name="dateOfBirth", nullable=false)
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
 
-    @ManyToMany
-    @JoinTable(name = "candidate_skills", joinColumns = @JoinColumn(name = "candidate_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id"))
-    private List<Skill> skills;
+
+    public Candidate(String name, String email, String phoneNumber, LocalDate dateOfBirth) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.dateOfBirth = dateOfBirth;
+    }
 }

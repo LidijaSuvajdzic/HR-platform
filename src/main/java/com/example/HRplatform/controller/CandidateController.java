@@ -44,8 +44,8 @@ public class CandidateController {
     }
 
     @GetMapping("/byName/{name}")
-    public ResponseEntity<List<CandidateDto>> findByName(@PathVariable String name) {
-        return ResponseEntity.ok(candidateService.findAllByName(name)
+    public ResponseEntity<List<CandidateDto>> searchByName(@PathVariable String name) {
+        return ResponseEntity.ok(candidateService.searchByName(name)
                 .stream()
                 .map(candidateMapper::map)
                 .toList());
@@ -59,7 +59,7 @@ public class CandidateController {
                 .toList());
     }
 
-    @GetMapping("/bySkills/")
+    @PostMapping("/bySkills/")
     public ResponseEntity<List<CandidateDto>> findAllBySkills(@RequestBody List<String> skillNames) {
         return ResponseEntity.ok(candidateService.findAllBySkills(skillNames)
                                 .stream()

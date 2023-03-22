@@ -60,8 +60,8 @@ public class CandidateService {
     }
 
     @Transactional(readOnly = true)
-    public List<Candidate> findAllByName(final String name) {
-        return candidateRepository.findAllByName(name);
+    public List<Candidate> searchByName(final String name) {
+        return candidateRepository.findAllByNameContains(name);
     }
 
     @Transactional(readOnly = true)

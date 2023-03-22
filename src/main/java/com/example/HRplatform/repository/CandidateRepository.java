@@ -11,7 +11,8 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
     Optional<Candidate> findByUuid(UUID uuid);
 
-    List<Candidate> findAllByName(String name);
+    @Query()
+    List<Candidate> findAllByNameContains(String name);
 
     @Query(value = "SELECT DISTINCT c.id, c.uuid, c.name, c.email, c.phone_number, c.date_of_birth " +
             "FROM candidate c " +
